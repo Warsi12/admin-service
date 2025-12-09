@@ -3,6 +3,10 @@ from math import radians, sin, cos, sqrt, atan2
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"message": "MechieBro Admin Service API", "endpoints": {"/nearest": "GET - Find nearest mechanics by lat/lng coordinates"}}
+
 # ---- Dummy mechanic data stored in Python (You can replace with DB later) ----
 mechanics = [
     {"id": 1, "name": "Mechanic A", "lat": 28.6139, "lng": 77.2090, "phone": "9999999991"},
