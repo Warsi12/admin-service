@@ -68,4 +68,4 @@ def get_nearest(lat: float = Query(...), lng: float = Query(...)):
 
     # sort by distance & return nearest 3
     distances.sort(key=lambda x: x["distance_km"])
-    return [{"name": m["name"], "lat": m["lat"], "lng": m["lng"], "phone": m["phone"]} for m in distances[:3]]
+    return [{"name": m["name"], "lat": m["lat"], "lng": m["lng"], "phone": m["phone"], "distance_km": m["distance_km"]} for m in distances[:3]]
