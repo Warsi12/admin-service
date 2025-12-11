@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request
 from math import radians, sin, cos, sqrt, atan2
 
 app = FastAPI()
@@ -25,21 +25,13 @@ def root():
     return {
         "message": "MechieBro Admin Service API",
         "endpoints": {
-            "/nearest": "GET - Find nearest mechanics by lat,lng (string format)"
+            "/nearest/{lat_lon}": "GET - Find nearest mechanics by lat,lng (path variable format)"
         }
     }
 
-# Nearest mechanic endpoint
-@app.api_route("/nearest", methods=["GET", "POST"])
-async def get_nearest(request: Request, lat_lon: str = Query(None)):
-    # Handle POST (Typebot sends JSON)
-    if request.method == "POST":
-        data = await request.json()
-        lat_lon = data.get("lat_lon")
-
-    if lat_lon is None:
-        return {"error": "lat_lon (latitude,longitude) is required"}
-
+# Nearest mechanic endpoint with path variable
+@app.get("/nearest/{lat_lon}")
+async def get_nearest(lat_lon: str):
     # Try to split the lat_lon string into lat and lon
     try:
         lat_str, lon_str = lat_lon.split(",")
