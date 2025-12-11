@@ -35,7 +35,7 @@ def root():
 async def get_nearest(lat_lon: str):
     # Try to split the lat_lon string into lat and lon
     try:
-        decoded = unquote(location)
+        decoded = unquote(lat_lon)
         lat_str, lon_str = decoded.split(",")
         lat = float(lat_str)
         lon = float(lon_str)
