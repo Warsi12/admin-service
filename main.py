@@ -1,8 +1,17 @@
 from fastapi import FastAPI, Request
 from math import radians, sin, cos, sqrt, atan2
 from urllib.parse import unquote
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],        # or ["https://typebot.io"] for stricter security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dummy mechanic data stored in Python (You can replace with DB later)
 mechanics = [
@@ -36,7 +45,7 @@ async def get_nearest(lat_lon: str):
     # Try to split the lat_lon string into lat and lon
     try:
         decoded = unquote(lat_lon)
-        print(decoded)
+        print("DECODED "+decoded)
         lat_str, lon_str = decoded.split(",")
         lat = float(lat_str)
         lon = float(lon_str)
