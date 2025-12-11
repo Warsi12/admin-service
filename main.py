@@ -79,14 +79,39 @@ def distance(lat1, lon1, lat2, lon2):
     return R * c
 
 
-@app.get("/nearest")
-def get_nearest(lat: float = Query(...), lng: float = Query(...)):
-    distances = []
+from fastapi import Request, Query
 
+@app.api_route("/nearest", methods=["GET", "POST"])
+async def get_nearest(request: Request, lat: float = Query(None), lng: float = Query(None)):
+    # Handle POST (Typebot sends JSON)
+    if request.method == "POST":
+        data = await request.json()
+        lat = float(data.get("lat"))
+        lng = float(data.get("lng"))
+
+    if lat is None or lng is None:
+        return {"error": "lat and lng are required"}
+
+    distances = []
     for m in mechanics:
         d = distance(lat, lng, m["lat"], m["lng"])
-        distances.append({"name": m["name"], "lat": m["lat"], "lng": m["lng"], "phone": m["phone"], "distance_km": round(d, 2)})
+        distances.append({
+            "name": m["name"],
+            "lat": m["lat"],
+            "lng": m["lng"],
+            "phone": m["phone"],
+            "distance_km": round(d, 2)
+        })
 
     # sort by distance & return nearest 3
     distances.sort(key=lambda x: x["distance_km"])
-    return [{"name": m["name"], "lat": m["lat"], "lng": m["lng"], "phone": m["phone"], "distance_km": m["distance_km"]} for m in distances[:3]]
+    return [
+        {
+            "name": m["name"],
+            "lat": m["lat"],
+            "lng": m["lng"],
+            "phone": m["phone"],
+            "distance_km": m["distance_km"]
+        }
+        for m in distances[:3]
+    ]
