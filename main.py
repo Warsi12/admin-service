@@ -1,28 +1,28 @@
 from fastapi import FastAPI, Query
 from math import radians, sin, cos, sqrt, atan2
-import threading
-import time
-import requests
+# import threading
+# import time
+# import requests
 app = FastAPI()
 
 
 
-PING_URL = "https://admin-service-ve96.onrender.com/"   # your Render URL
+# PING_URL = "https://admin-service-ve96.onrender.com/"   # your Render URL
 
-def keep_alive():
-    while True:
-        try:
-            requests.get(PING_URL, timeout=10)
-            print("Pinged to keep service awake")
-        except Exception as e:
-            print("Ping failed:", e)
-        time.sleep(300)  # 300 sec = 5 minutes
+# def keep_alive():
+#     while True:
+#         try:
+#             requests.get(PING_URL, timeout=10)
+#             print("Pinged to keep service awake")
+#         except Exception as e:
+#             print("Ping failed:", e)
+#         time.sleep(300)  # 300 sec = 5 minutes
 
 
-@app.on_event("startup")
-def start_keep_alive():
-    thread = threading.Thread(target=keep_alive, daemon=True)
-    thread.start()
+# @app.on_event("startup")
+# def start_keep_alive():
+#     thread = threading.Thread(target=keep_alive, daemon=True)
+#     thread.start()
 
 
 @app.get("/")
