@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from math import radians, sin, cos, sqrt, atan2
+from urllib.parse import unquote
 
 app = FastAPI()
 
@@ -34,7 +35,8 @@ def root():
 async def get_nearest(lat_lon: str):
     # Try to split the lat_lon string into lat and lon
     try:
-        lat_str, lon_str = lat_lon.split(",")
+        decoded = unquote(location)
+        lat_str, lon_str = decoded.split(",")
         lat = float(lat_str)
         lon = float(lon_str)
     except ValueError:
