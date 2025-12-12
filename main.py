@@ -3,6 +3,9 @@ from math import radians, sin, cos, sqrt, atan2
 from urllib.parse import unquote
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
+import threading
+import time
+import requests
 
 app = FastAPI()
 
@@ -80,15 +83,22 @@ async def get_nearest(lat_lon: str):
 
 
 # -------------------- SELF-PING JOB --------------------
+PING_URL = "https://admin-service-ve96.onrender.com/"
 def ping_self():
-    try:
-        url = "https://admin-service-ve96.onrender.com"  # 🔁 your own Render URL
-        res = requests.get(url, timeout=10)
-        print(f"[SELF-PING] Status: {res.status_code}")
-    except Exception as e:
-        print(f"[SELF-PING ERROR] {e}")
+    while True:
+        try:
+            requests.get(PING_URL, timeout=10)
+            print("Self ping sent")
+        except Exception as e:
+            print("Ping failed:", e)
+        time.sleep(300)  # every 5 minutes
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(ping_self, "interval", minutes=5)  # ping every 5 minutes
-scheduler.start()
+@app.on_event("startup")
+def start_pinger():
+    thread = threading.Thread(target=ping_self, daemon=True)
+    thread.start()
+
+@app.get("/")
+def home():
+    return {"status": "running"}
 # ------------------------------------------------------
