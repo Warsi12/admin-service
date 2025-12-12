@@ -97,8 +97,4 @@ def ping_self():
 def start_pinger():
     thread = threading.Thread(target=ping_self, daemon=True)
     thread.start()
-
-@app.get("/")
-def home():
-    return {"status": "running"}
 # ------------------------------------------------------
