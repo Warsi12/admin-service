@@ -91,12 +91,12 @@ async def get_nearest(lat_lon: str):
 
 @app.post("/signup", response_model=schemas.UserResponse)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    db_user = db.query(models.User).filter(models.User.phone_number == user.phone_number).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Phone number already registered")
     
     hashed_password = security.get_password_hash(user.password)
-    new_user = models.User(email=user.email, hashed_password=hashed_password)
+    new_user = models.User(phone_number=user.phone_number, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -104,13 +104,13 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/login")
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    db_user = db.query(models.User).filter(models.User.phone_number == user.phone_number).first()
     if not db_user or not security.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect phone number or password",
         )
-    return {"message": "Login successful", "user": {"id": db_user.id, "email": db_user.email}}
+    return {"message": "Login successful", "user": {"id": db_user.id, "phone_number": db_user.phone_number}}
 
 # -------------------- SELF-PING JOB --------------------
 PING_URL = "https://admin-service-ve96.onrender.com/"

@@ -4,14 +4,14 @@ import time
 BASE_URL = "http://localhost:8000"
 
 def test_auth():
-    email = f"test_{int(time.time())}@example.com"
+    phone_number = f"9{int(time.time() % 1000000000):09d}" # Random 10 digit number
     password = "testpassword123"
 
-    print(f"Testing with email: {email}")
+    print(f"Testing with phone number: {phone_number}")
 
     # 1. Signup
     print("Testing Signup...")
-    signup_data = {"email": email, "password": password}
+    signup_data = {"phone_number": phone_number, "password": password}
     response = requests.post(f"{BASE_URL}/signup", json=signup_data)
     print(f"Signup Response: {response.status_code} - {response.json()}")
     
@@ -21,7 +21,7 @@ def test_auth():
 
     # 2. Login
     print("\nTesting Login...")
-    login_data = {"email": email, "password": password}
+    login_data = {"phone_number": phone_number, "password": password}
     response = requests.post(f"{BASE_URL}/login", json=login_data)
     print(f"Login Response: {response.status_code} - {response.json()}")
 
@@ -31,8 +31,6 @@ def test_auth():
         print("\nAuth test failed!")
 
 if __name__ == "__main__":
-    # Note: This script assumes the server is running at localhost:8000
-    # You can start it with: uvicorn main:app --reload
     try:
         test_auth()
     except requests.exceptions.ConnectionError:
