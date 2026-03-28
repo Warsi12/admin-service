@@ -1,11 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from math import radians, sin, cos, sqrt, atan2
 from urllib.parse import unquote
-from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
 import threading
 import time
 import requests
+from sqlalchemy.orm import Session
+import models, schemas, security
+from database import engine, get_db
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -81,6 +86,31 @@ async def get_nearest(lat_lon: str):
     ]
 
 
+
+# -------------------- AUTH ENDPOINTS --------------------
+
+@app.post("/signup", response_model=schemas.UserResponse)
+def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = security.get_password_hash(user.password)
+    new_user = models.User(email=user.email, hashed_password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.post("/login")
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if not db_user or not security.verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    return {"message": "Login successful", "user": {"id": db_user.id, "email": db_user.email}}
 
 # -------------------- SELF-PING JOB --------------------
 PING_URL = "https://admin-service-ve96.onrender.com/"
