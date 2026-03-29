@@ -2,12 +2,13 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 class UserBase(BaseModel):
     phone_number: str
 
 class UserCreate(UserBase):
-    full_name: str
+    full_name: Optional[str] = None
     password: str = Field(..., min_length=6)
 
 class UserLogin(UserBase):
