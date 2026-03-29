@@ -9,8 +9,7 @@ from sqlalchemy.orm import Session
 import models, schemas, security
 from database import engine, get_db
 
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
+# Tables will be created on startup
 
 app = FastAPI()
 
@@ -124,7 +123,15 @@ def ping_self():
         time.sleep(300)  # every 5 minutes
 
 @app.on_event("startup")
-def start_pinger():
+def startup_event():
+    print("--- STARTUP: Initializing database ---")
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        print("--- STARTUP: Database initialization complete ---")
+    except Exception as e:
+        print(f"--- STARTUP: Database initialization FAILED: {e} ---")
+    
+    # Start the self-ping job
     thread = threading.Thread(target=ping_self, daemon=True)
     thread.start()
 # ------------------------------------------------------
