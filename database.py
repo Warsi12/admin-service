@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Encode password to handle special characters like '@'
 password = urllib.parse.quote_plus("Faraz@880730")
-SQLALCHEMY_DATABASE_URL = f"postgresql://postgres.iszmckganwvrpzewtiyh:{password}@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=disable"
+SQLALCHEMY_DATABASE_URL = f"postgresql://postgres.iszmckganwvrpzewtiyh:password@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
