@@ -16,7 +16,7 @@ class UserLogin(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    full_name: str | None = None
+    full_name: Optional[str] = None
 
     class Config:
         from_attributes = True
