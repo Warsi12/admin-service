@@ -120,7 +120,7 @@ def ping_self():
             print("Self ping sent")
         except Exception as e:
             print("Ping failed:", e)
-        time.sleep(300)  # every 5 minutes
+        time.sleep(180)  # every 5 minutes
 
 @app.on_event("startup")
 def startup_event():
