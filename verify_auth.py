@@ -11,7 +11,11 @@ def test_auth():
 
     # 1. Signup
     print("Testing Signup...")
-    signup_data = {"phone_number": phone_number, "password": password}
+    signup_data = {
+        "phone_number": phone_number, 
+        "full_name": "Test User",
+        "password": password
+    }
     response = requests.post(f"{BASE_URL}/signup", json=signup_data)
     print(f"Signup Response: {response.status_code} - {response.json()}")
     

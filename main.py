@@ -21,13 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dummy mechanic data stored in Python (You can replace with DB later)
-mechanics = [
-    {"id": 1, "name": "Mechanic Faraz", "lat": 28.6110459, "lng": 77.3355300, "phone": "9999999991"},
-    {"id": 2, "name": "Mechanic Shoaib", "lat": 28.6119292, "lng": 77.3353148, "phone": "9999999992"},
-    {"id": 3, "name": "Mechanic Irfan", "lat": 28.6114247, "lng": 77.3355300, "phone": "9999999993"},
-    {"id": 4, "name": "Mechanic D", "lat": 28.6300, "lng": 77.2150, "phone": "9999999994"},
-]
+from typing import List
 
 # Haversine formula to calculate distance
 def distance(lat1, lon1, lat2, lon2):
@@ -43,46 +37,76 @@ def root():
     return {
         "message": "MechieBro Admin Service API",
         "endpoints": {
-            "/nearest/{lat_lon}": "GET - Find nearest mechanics by lat,lng (path variable format)"
+            "/nearest/{lat_lon}": "GET - Find nearest mechanics by lat,lng (path variable format)",
+            "/emergency-request": "POST - Create an emergency request",
+            "/emergency-request/history/{phone_number}": "GET - List history of emergency requests"
         }
     }
 
 # Nearest mechanic endpoint with path variable
 @app.get("/nearest/{lat_lon}")
-async def get_nearest(lat_lon: str):
+async def get_nearest(lat_lon: str, db: Session = Depends(get_db)):
     # Try to split the lat_lon string into lat and lon
     try:
         decoded = unquote(lat_lon)
-        print("DECODED "+decoded)
         lat_str, lon_str = decoded.split(",")
         lat = float(lat_str)
         lon = float(lon_str)
     except ValueError:
-        return {"error": "Invalid lat_lon format. It should be 'lat,lon' (e.g., '28.6110,77.3355')"}
+        raise HTTPException(status_code=400, detail="Invalid lat_lon format. It should be 'lat,lon' (e.g., '28.6110,77.3355')")
 
+    # Fetch mechanics from DB (only ONLINE ones)
+    db_mechanics = db.query(models.MechanicProfile).filter(models.MechanicProfile.status == "ONLINE").all()
+    print(db_mechanics)
     distances = []
-    for m in mechanics:
-        d = distance(lat, lon, m["lat"], m["lng"])
-        distances.append({
-            "name": m["name"],
-            "lat": m["lat"],
-            "lng": m["lng"],
-            "phone": m["phone"],
-            "distance_km": round(d, 2)
-        })
+    for m in db_mechanics:
+        if not m.current_location:
+            continue
+        try:
+            m_lat_str, m_lon_str = m.current_location.split(",")
+            m_lat = float(m_lat_str)
+            m_lng = float(m_lon_str)
+            
+            d = distance(lat, lon, m_lat, m_lng)
+            # Find associated user name from join or if we just want to return what we have
+            # For now, let's assume we want to return the mechanic's details we have
+            distances.append({
+                "id": str(m.id),
+                "name": m.name,
+                "lat": m_lat,
+                "lng": m_lng,
+                "distance_km": round(d, 2),
+                "rating": float(m.rating) if m.rating else 0.0,
+                "status": m.status
+            })
+        except (ValueError, AttributeError):
+            continue
 
     # Sort by distance & return nearest 3
     distances.sort(key=lambda x: x["distance_km"])
-    return [
-        {
-            "name": m["name"],
-            "lat": m["lat"],
-            "lng": m["lng"],
-            "phone": m["phone"],
-            "distance_km": m["distance_km"]
-        }
-        for m in distances[:3]
-    ]
+    return distances[:3]
+
+@app.post("/emergency-request", response_model=schemas.EmergencyRequestResponse)
+def create_emergency_request(request: schemas.EmergencyRequestCreate, db: Session = Depends(get_db)):
+    new_request = models.EmergencyRequest(
+        customer_phone_number=request.customer_phone_number,
+        location=request.location,
+        service_type=request.service_type,
+        vehicle_type=request.vehicle_type,
+        description=request.description,
+        status="PENDING"
+    )
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+    return new_request
+
+@app.get("/emergency-request/history/{phone_number}", response_model=List[schemas.EmergencyRequestResponse])
+def get_emergency_history(phone_number: str, db: Session = Depends(get_db)):
+    history = db.query(models.EmergencyRequest).filter(
+        models.EmergencyRequest.customer_phone_number == phone_number
+    ).order_by(models.EmergencyRequest.created_at.desc()).all()
+    return history
 
 
 
@@ -95,7 +119,11 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Phone number already registered")
     
     hashed_password = security.get_password_hash(user.password)
-    new_user = models.User(phone_number=user.phone_number, hashed_password=hashed_password)
+    new_user = models.User(
+        phone_number=user.phone_number, 
+        full_name=user.full_name,
+        hashed_password=hashed_password
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -109,7 +137,14 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect phone number or password",
         )
-    return {"message": "Login successful", "user": {"id": db_user.id, "phone_number": db_user.phone_number}}
+    return {
+        "message": "Login successful", 
+        "user": {
+            "id": db_user.id, 
+            "phone_number": db_user.phone_number,
+            "full_name": db_user.full_name
+        }
+    }
 
 # -------------------- SELF-PING JOB --------------------
 PING_URL = "https://admin-service-ve96.onrender.com/"
