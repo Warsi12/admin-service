@@ -23,14 +23,14 @@ class UserResponse(UserBase):
 
 class MechanicProfileBase(BaseModel):
     user_id: UUID
-    name: str | None = None
+    name: Optional[str] = None
     status: str
-    current_location: str | None = None
+    current_location: Optional[str] = None
 
 class MechanicProfileResponse(MechanicProfileBase):
     id: UUID
-    rating: Decimal | None = None
-    rating_count: int | None = None
+    rating: Optional[Decimal] = None
+    rating_count: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
@@ -42,15 +42,15 @@ class EmergencyRequestCreate(BaseModel):
     location: str
     service_type: str
     vehicle_type: str
-    description: str | None = None
+    description: Optional[str] = None
 
 class EmergencyRequestResponse(EmergencyRequestCreate):
     id: UUID
     status: str
-    mechanic_id: UUID | None = None
+    mechanic_id: Optional[UUID] = None
     requested_at: datetime
-    assigned_at: datetime | None = None
-    completed_at: datetime | None = None
+    assigned_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
