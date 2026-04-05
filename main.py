@@ -39,7 +39,8 @@ def root():
         "endpoints": {
             "/nearest/{lat_lon}": "GET - Find nearest mechanics by lat,lng (path variable format)",
             "/emergency-request": "POST - Create an emergency request",
-            "/emergency-request/history/{phone_number}": "GET - List history of emergency requests"
+            "/emergency-request/history/{phone_number}": "GET - List history of emergency requests",
+            "/list_requests": "GET - List requests by query parameter (phone_number)"
         }
     }
 
@@ -103,6 +104,13 @@ def create_emergency_request(request: schemas.EmergencyRequestCreate, db: Sessio
 
 @app.get("/emergency-request/history/{phone_number}", response_model=List[schemas.EmergencyRequestResponse])
 def get_emergency_history(phone_number: str, db: Session = Depends(get_db)):
+    history = db.query(models.EmergencyRequest).filter(
+        models.EmergencyRequest.customer_phone_number == phone_number
+    ).order_by(models.EmergencyRequest.created_at.desc()).all()
+    return history
+
+@app.get("/list_requests", response_model=List[schemas.EmergencyRequestResponse])
+def list_requests(phone_number: str, db: Session = Depends(get_db)):
     history = db.query(models.EmergencyRequest).filter(
         models.EmergencyRequest.customer_phone_number == phone_number
     ).order_by(models.EmergencyRequest.created_at.desc()).all()
